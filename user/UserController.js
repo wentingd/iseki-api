@@ -8,11 +8,14 @@ var User = require('./User');
 
 // CREATES A NEW USER
 router.post('/', function (req, res) {
+    if (!req.body.email || !req.body.password) {
+      return res.status(409).send("Email and password are required information.");
+    }
     User.create({
-            name : req.body.name,
+            name : req.body.name || "unnamed",
             email : req.body.email,
             password : req.body.password
-        }, 
+        },
         function (err, user) {
             if (err) return res.status(500).send("There was a problem adding the information to the database.");
             res.status(200).send(user);
