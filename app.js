@@ -1,8 +1,13 @@
-var express = require('express');
-var app = express();
-var db = require('./db');
+const express = require('express');
+const app = express();
+const db = require('./db');
 
-var UserController = require('./user/UserController');
+const UserController = require('./User/UserController');
+const TrainLineController = require('./Trains/TrainLineController');
+const StationController = require('./Trains/StationController');
+
 app.use('/users', UserController);
+app.use('/trains/lines', TrainLineController);
+app.use('/trains/stations', StationController);
 
 module.exports = app;
