@@ -14,20 +14,20 @@ router.use(bodyParser.urlencoded({ extended: true }));
 router.use(bodyParser.json());
 
 router.post('/register', (req, res) => {
-  const { email, password } = req.body;
+  const { email, username, password } = req.body;
   if (!email || !password) {
     return res.status(409).send('Email and password are required for register.');
   }
   return User.find({ email })
     .then((found) => {
       if (found.length > 0) {
-        logger.info(`Try to register existing user with email: ${req.body.email}`);
+        logger.info(`Try to register existing user with email: ${email}`);
         return res.status(403).send(`User with email ${email} already exists.`);
       }
-      return bcrypt.hash(req.body.password, saltRounds)
+      return bcrypt.hash(password, saltRounds)
         .then((hash) => User.create({
-          name: req.body.name,
-          email: req.body.email,
+          username,
+          email,
           password: hash,
         }));
     })
@@ -41,11 +41,12 @@ router.post('/register', (req, res) => {
 });
 
 router.post('/login', (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
+  const { email, username, password } = req.body;
+  if ((!email && !username) || !password) {
     return res.status(409).send('Email(or username) and password are required for login.');
   }
-  return User.find({ email })
+  return User
+    .find({ $or: [{ username }, { email }] })
     .then((found) => {
       if (!found || found.length <= 0) {
         logger.info(`No user with email: ${email}`);
@@ -54,8 +55,10 @@ router.post('/login', (req, res) => {
       return bcrypt.compare(password, found[0].password)
         .then((isHashMatch) => {
           if (isHashMatch) {
+            logger.info(`User loggedin with email: ${email}`);
             return res.status(200).send(`User logged in successfully. id: ${found[0]._id}`);
           }
+          logger.info(`Wrong email or password: ${email}`);
           return res.status(403).send('Wrong email or password.');
         });
     })
@@ -67,7 +70,7 @@ router.post('/login', (req, res) => {
 
 router.get('/', (req, res) => {
   return User
-    .find({}).select('name email')
+    .find({}).select('username email')
     .then((users) => {
       res.status(200).send(users);
     })
@@ -79,7 +82,7 @@ router.get('/', (req, res) => {
 
 router.get('/:id', (req, res) => {
   return User
-    .findById(req.params.id).select('name email')
+    .findById(req.params.id).select('username email')
     .then((user) => {
       if (!user) return res.status(404).send('No user found.');
       return res.status(200).send(user);
@@ -106,7 +109,7 @@ router.delete('/:id', (req, res) => {
 router.put('/:id', (req, res) => {
   return User
     .findByIdAndUpdate(req.params.id, req.body, { new: true })
-    .select('name email')
+    .select('username email')
     .then((user) => {
       return res.status(200).send(user);
     })
