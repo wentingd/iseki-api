@@ -13,6 +13,10 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  admin: {
+    type: Boolean,
+    required: false,
+  },
 });
 
 mongoose.model('User', UserSchema);
