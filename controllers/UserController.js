@@ -126,15 +126,32 @@ router.delete('/id/:id', checkUserToken, (req, res) => {
 
 router.put('/id/:id', checkUserToken, (req, res) => {
   return User
-    .findByIdAndUpdate(req.params.id, req.body, { new: true })
-    .select('-password')
-    .then((user) => {
-      return res.status(200).send({ user, success: true });
+    .findOne({ email: req.body.email })
+    .then((duplicatedEmail) => {
+      if (duplicatedEmail) {
+        return res.status(403).send({
+          message: 'A user with this email already exists.',
+          success: false,
+        });
+      }
+      return User
+        .findByIdAndUpdate(req.params.id, req.body, { new: true })
+        .select('-password')
+        .then((user) => {
+          return res.status(200).send({ user, success: true });
+        })
+        .catch((err) => {
+          logger.error(err.message);
+          return res.status(500).send({
+            message: 'Error when updating the user.',
+            success: false,
+          });
+        });
     })
     .catch((err) => {
       logger.error(err.message);
       return res.status(500).send({
-        message: 'Error when updating the user.',
+        message: 'Error when querying the user.',
         success: false,
       });
     });
