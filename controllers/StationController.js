@@ -1,8 +1,10 @@
 const express = require('express');
+const bodyParser = require('body-parser');
 
 const router = express.Router();
-const bodyParser = require('body-parser');
-const { Station } = require('./Train');
+
+const { Station } = require('../model/Train');
+const logger = require('../config/logger');
 
 router.use(bodyParser.urlencoded({ extended: true }));
 router.use(bodyParser.json());
@@ -14,7 +16,7 @@ router.post('/', (req, res) => {
   Station
     .find(req.body.id)
     .then((result) => {
-      console.log(result);
+      logger.info(result);
     });
   Station.create({
     id: req.body.id,

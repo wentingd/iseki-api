@@ -6,7 +6,7 @@ const router = express.Router();
 
 const logger = require('../config/logger');
 const { checkUserToken, checkAdminToken, signToken } = require('../middleware/jwt');
-const User = require('./User');
+const User = require('../model//User');
 
 const saltRounds = 10;
 
