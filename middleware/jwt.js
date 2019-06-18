@@ -2,16 +2,16 @@ const jwt = require('jsonwebtoken');
 const config = require('./config.js');
 
 const isSameUser = (req, decodedJwt) => {
-  const { _id, email } = decodedJwt;
-  if (req.method === 'GET') {
-    return req.params.id === _id;
+  const { id, email } = decodedJwt;
+  if (req.params.id) {
+    return req.params.id === id;
   }
   return req.body.email === email;
 };
 
-const signToken = (user) => {
+const signToken = (payload) => {
   const token = jwt.sign({
-    ...user,
+    ...payload,
   }, config.secret);
   return token;
 };

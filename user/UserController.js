@@ -17,13 +17,19 @@ router.use(bodyParser.json());
 router.post('/register', (req, res) => {
   const { email, username, password } = req.body;
   if (!email || !password) {
-    return res.status(409).send('Email and password are required for register.');
+    return res.status(409).send({
+      message: 'Email and password are required for register.',
+      success: false,
+    });
   }
   return User.find({ email })
     .then((found) => {
       if (found.length > 0) {
         logger.info(`Try to register existing user with email: ${email}`);
-        return res.status(403).send(`User with email ${email} already exists.`);
+        return res.status(403).send({
+          message: `User with email ${email} already exists.`,
+          success: false,
+        });
       }
       return bcrypt.hash(password, saltRounds)
         .then((hash) => User.create({
@@ -33,11 +39,14 @@ router.post('/register', (req, res) => {
         }));
     })
     .then((user) => {
-      res.status(200).send(`User registered successfully. id: ${user._id}`);
+      res.status(200).send({ user, success: true });
     })
     .catch((err) => {
       logger.error(err.message);
-      res.status(500).send(`Fail to add user. Error: ${err}`);
+      res.status(500).send({
+        message: `Fail to add user. Error: ${err}`,
+        success: false,
+      });
     });
 });
 
@@ -51,17 +60,22 @@ router.post('/login', (req, res) => {
     .then((found) => {
       if (!found) {
         logger.info(`No user with email: ${email}`);
-        return res.status(404).send('User not found.');
+        return res.status(404).send({
+          message: 'User not found.',
+          success: false,
+        });
       }
       return bcrypt.compare(password, found.password)
         .then((isHashMatch) => {
           if (isHashMatch) {
             logger.info(`User loggedin with email: ${email}`);
+            const token = signToken({
+              email, username, admin: found.admin, id: found._id,
+            });
             return res.status(200).send({
-              message: 'Logged in successfully.',
-              token: signToken({
-                email, username, admin: found.admin, _id: found._id,
-              }),
+              success: true,
+              token: `Bearer ${token}`,
+              id: found._id,
             });
           }
           logger.info(`Wrong email or password: ${email}`);
@@ -80,11 +94,14 @@ router.get('/id/:id', checkUserToken, (req, res) => {
     .findById(req.params.id).select('-password')
     .then((user) => {
       if (!user) return res.status(404).send('No user found.');
-      return res.status(200).send(user);
+      return res.status(200).send({ user, success: true });
     })
     .catch((err) => {
       logger.error(err.message);
-      res.status(500).send('Error when finding the users.');
+      res.status(500).send({
+        message: 'Error when finding the users.',
+        success: false,
+      });
     });
 });
 
@@ -93,11 +110,17 @@ router.delete('/id/:id', checkUserToken, (req, res) => {
     .findByIdAndRemove(req.params.id)
     .then((user) => {
       if (!user) return res.status(404).send('No user found.');
-      return res.status(200).send(`User with id ${user._id} was deleted.`);
+      return res.status(200).send({
+        success: true,
+        message: `User with id ${user._id} was deleted.`,
+      });
     })
     .catch((err) => {
       logger.error(err.message);
-      return res.status(500).send('Error when deleting the user.');
+      return res.status(500).send({
+        message: 'Error when deleting the user.',
+        success: false,
+      });
     });
 });
 
@@ -106,11 +129,14 @@ router.put('/id/:id', checkUserToken, (req, res) => {
     .findByIdAndUpdate(req.params.id, req.body, { new: true })
     .select('-password')
     .then((user) => {
-      return res.status(200).send(user);
+      return res.status(200).send({ user, success: true });
     })
     .catch((err) => {
       logger.error(err.message);
-      return res.status(500).send('Error when updating the user.');
+      return res.status(500).send({
+        message: 'Error when updating the user.',
+        success: false,
+      });
     });
 });
 
@@ -119,11 +145,14 @@ router.get('/all', checkAdminToken, (req, res) => {
   return User
     .find({}).select('-password')
     .then((users) => {
-      res.status(200).send(users);
+      res.status(200).send({ users, success: true });
     })
     .catch((err) => {
       logger.error(err.message);
-      res.status(500).send('Error finding the users.');
+      res.status(500).send({
+        message: 'Error finding the users.',
+        success: false,
+      });
     });
 });
 

@@ -17,6 +17,10 @@ const UserSchema = new mongoose.Schema({
     type: Boolean,
     required: false,
   },
+  config: {
+    type: Object,
+    required: false,
+  },
 });
 
 mongoose.model('User', UserSchema);
