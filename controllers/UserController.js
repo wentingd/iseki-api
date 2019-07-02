@@ -31,19 +31,24 @@ router.post('/register', (req, res) => {
           success: false,
         });
       }
-      return bcrypt.hash(password, saltRounds)
+      return bcrypt
+        .hash(password, saltRounds)
         .then((hash) => User.create({
           username,
           email,
           password: hash,
-        }));
-    })
-    .then((user) => {
-      res.status(200).send({ user, success: true });
+        }))
+        .then((user) => {
+          return res.status(200).send({
+            user,
+            success: true,
+            message: 'New user registered successfully!',
+          });
+        });
     })
     .catch((err) => {
       logger.error(err.message);
-      res.status(500).send({
+      return res.status(500).send({
         message: `Fail to add user. Error: ${err}`,
         success: false,
       });
