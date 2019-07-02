@@ -58,7 +58,10 @@ router.post('/register', (req, res) => {
 router.post('/login', (req, res) => {
   const { email, username, password } = req.body;
   if ((!email && !username) || !password) {
-    return res.status(409).send('Email(or username) and password are required for login.');
+    return res.status(409).send({
+      message: 'Email(or username) and password are required for login.',
+      success: false,
+    });
   }
   return User
     .findOne({ $or: [{ username }, { email }] })
@@ -84,12 +87,18 @@ router.post('/login', (req, res) => {
             });
           }
           logger.info(`Wrong email or password: ${email}`);
-          return res.status(403).send('Wrong email or password.');
+          return res.status(403).send({
+            success: false,
+            message: 'Wrong email or password.',
+          });
         });
     })
     .catch((err) => {
       logger.error(err.message);
-      res.status(500).send('Error when authenticating user.');
+      return res.status(500).send({
+        message: 'Error when authenticating user.',
+        success: false,
+      });
     });
 });
 
@@ -98,13 +107,18 @@ router.get('/id/:id', checkUserToken, (req, res) => {
   return User
     .findById(req.params.id).select('-password')
     .then((user) => {
-      if (!user) return res.status(404).send('No user found.');
+      if (!user) {
+        return res.status(404).send({
+          message: 'No user found with given id.',
+          success: false,
+        });
+      }
       return res.status(200).send({ user, success: true });
     })
     .catch((err) => {
       logger.error(err.message);
-      res.status(500).send({
-        message: 'Error when finding the users.',
+      return res.status(500).send({
+        message: 'Error when finding the user by id.',
         success: false,
       });
     });
